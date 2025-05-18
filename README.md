@@ -1,54 +1,121 @@
-# React + TypeScript + Vite
+# Aplikasi Todo React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi Todo ini adalah aplikasi manajemen tugas yang dibangun menggunakan React, TypeScript, dan Vite. Aplikasi ini memungkinkan pengguna untuk mengelola daftar tugas mereka dengan fitur autentikasi, tema gelap/terang, dan antarmuka yang responsif.
 
-Currently, two official plugins are available:
+## Fitur Utama
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Autentikasi Pengguna**: Sistem login yang aman dengan penyimpanan token
+- **Manajemen Todo**: Tambah, edit, hapus, dan tandai todo sebagai selesai
+- **Mode Tema**: Dukungan tema gelap dan terang dengan deteksi preferensi sistem
+- **Responsif**: Antarmuka yang responsif untuk berbagai ukuran layar
+- **Notifikasi**: Sistem notifikasi toast untuk memberikan umpan balik kepada pengguna
+- **Proteksi Rute**: Rute terproteksi yang hanya dapat diakses oleh pengguna yang sudah login
 
-## Expanding the ESLint configuration
+## Teknologi yang Digunakan
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **React 19**: Library JavaScript untuk membangun antarmuka pengguna
+- **TypeScript**: Superset JavaScript dengan tipe statis
+- **Vite**: Build tool yang cepat untuk pengembangan modern
+- **React Router**: Untuk navigasi antar halaman
+- **Tailwind CSS**: Framework CSS untuk styling yang cepat
+- **React Hook Form**: Untuk manajemen form dan validasi
+- **React Toastify**: Untuk notifikasi toast
+- **Axios**: Untuk melakukan HTTP request ke API
+- **Heroicons**: Untuk ikon-ikon UI
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Struktur Aplikasi
+
+### Komponen Utama
+
+- **TodoItem**: Menampilkan item todo individual dengan opsi edit, hapus, dan tandai selesai
+- **TodoForm**: Form untuk menambahkan todo baru
+- **DeleteConfirmModal**: Modal konfirmasi untuk menghapus todo
+- **TodoSkeleton**: Komponen loading skeleton untuk todo
+
+### Halaman
+
+- **TodosPage**: Halaman utama yang menampilkan daftar todo dan form untuk menambahkan todo baru
+- **LoginPage**: Halaman login untuk autentikasi pengguna
+
+### Konteks
+
+- **AuthContext**: Menyediakan state autentikasi dan fungsi login/logout ke seluruh aplikasi
+- **ThemeContext**: Mengelola tema aplikasi (gelap/terang)
+
+### Layanan
+
+- **auth.ts**: Layanan untuk autentikasi (login, logout)
+- **todos.ts**: Layanan untuk operasi CRUD pada todo
+
+## Cara Menjalankan Aplikasi
+
+### Prasyarat
+
+- Node.js versi 16 atau lebih tinggi
+- npm atau yarn
+
+### Langkah-langkah
+
+1. Clone repositori ini
+2. Install dependensi:
+   ```bash
+   npm install
+   ```
+3. Jalankan aplikasi dalam mode pengembangan:
+   ```bash
+   npm run dev
+   ```
+4. Buka `http://localhost:5173` di browser Anda
+
+## Build untuk Produksi
+
+Untuk membuat versi produksi:
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Untuk melihat preview build:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run preview
 ```
+
+## Fitur Lanjutan
+
+### Manajemen State
+
+Aplikasi ini menggunakan kombinasi dari React Context API dan useReducer untuk manajemen state yang efisien. Pola ini memungkinkan:
+
+- Pemisahan logika bisnis dari komponen UI
+- Pengelolaan state yang lebih terstruktur dengan actions dan reducers
+- Performa yang lebih baik dengan update yang terfokus
+
+### Tema Dinamis
+
+Aplikasi mendukung tema gelap dan terang dengan:
+
+- Deteksi otomatis preferensi sistem
+- Penyimpanan preferensi pengguna di localStorage
+- Toggle tema yang mudah diakses
+
+### Validasi Form
+
+Form dalam aplikasi menggunakan React Hook Form untuk:
+
+- Validasi input yang efisien
+- Penanganan error yang user-friendly
+- Pengalaman form yang responsif
+
+### Keamanan
+
+Aplikasi mengimplementasikan beberapa fitur keamanan dasar:
+
+- Penyimpanan token JWT di localStorage
+- Proteksi rute untuk pengguna yang belum login
+- Penanganan error yang aman
+
+
+## Lisensi
+
+[MIT License](LICENSE)
