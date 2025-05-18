@@ -3,6 +3,7 @@ import {
     login as loginService,
     logout as logoutService,
 } from "../services/auth";
+import { toast } from 'react-toastify'; // Impor toast
 import type { LoginCredentials, User } from "../types";
 
 interface AuthContextType {
@@ -10,7 +11,7 @@ interface AuthContextType {
     loading: boolean;
     error: string | null;
     login: (credentials: LoginCredentials) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>; // Ubah ke Promise<void> karena logout mungkin asinkronus
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -18,7 +19,7 @@ export const AuthContext = createContext<AuthContextType>({
     loading: false,
     error: null,
     login: async () => { },
-    logout: () => { },
+    logout: async () => { }, // Ubah ke async
 });
 
 interface AuthProviderProps {
@@ -40,50 +41,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const login = async (credentials: LoginCredentials) => {
         setLoading(true);
-        setError(null); // Reset error sebelum mencoba login baru
-        
+        setError(null);
+
         try {
             const response = await loginService(credentials);
-            
-            // Periksa apakah login berhasil
+
             if (response && response.success) {
-                const userData: User = {
-                    userId: response.userId,
-                    username: response.username,
-                    token: response.token
-                };
-                setUser(userData);
-                localStorage.setItem("user", JSON.stringify(userData));
+                setUser(response);
+                localStorage.setItem("user", JSON.stringify(response));
                 localStorage.setItem("token", response.token);
+                toast.success('Login successful!', { // Tambahkan toast untuk login
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             } else {
-                // Tangani kasus ketika respons ada tetapi login gagal
                 setError(response?.message || "Email atau password salah");
+                toast.error(response?.message || "Email atau password salah", {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         } catch (err: any) {
             console.error("Login error:", err);
-            
-            // Tangani error dari API dengan lebih baik
+
             if (err.response) {
-                // Error dari respons server (status code bukan 2xx)
                 setError(err.response.data?.message || "Email atau password salah");
             } else if (err.request) {
-                // Error karena tidak ada respons dari server
                 setError("Tidak dapat terhubung ke server. Periksa koneksi internet Anda.");
+                toast.error("Tidak dapat terhubung ke server.", {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             } else {
-                // Error lainnya
                 setError(err.message || "Terjadi kesalahan saat login");
+                toast.error(err.message || "Terjadi kesalahan saat login", {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         } finally {
             setLoading(false);
         }
     };
 
-    const logout = () => {
-        logoutService();
-        setUser(null);
-        // Also remove items from localStorage when logging out
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+    const logout = async () => { // Ubah ke async
+        setLoading(true); // Optional: tambahkan loading state
+        try {
+            await logoutService(); // Panggil logoutService yang mungkin asinkronus
+            setUser(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            toast.info('You have logged out', { // Tambahkan toast untuk logout
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        } catch (err: any) {
+            console.error("Logout error:", err);
+            toast.error('Gagal logout: ' + (err.message || 'Terjadi kesalahan'), {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        } finally {
+            setLoading(false); // Optional: reset loading state
+        }
     };
 
     return (

@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import DeleteConfirmModal from './DeleteConfirmModal';
 import type { Todo } from '../types';
+import { CheckCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/solid';
 
 interface TodoItemProps {
     todo: Todo;
@@ -7,89 +9,118 @@ interface TodoItemProps {
     onDelete: (id: number) => void;
 }
 
-const TodoItem = ({ todo, onUpdate, onDelete }: TodoItemProps) => {
+const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [title, setTitle] = useState(todo.title);
-    const [description, setDescription] = useState(todo.description);
+    const [editTitle, setEditTitle] = useState(todo.title);
+    const [editDescription, setEditDescription] = useState(todo.description);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    const handleToggleComplete = () => {
-        onUpdate(todo.id, { completed: todo.completed ? 0 : 1 });
-    };
-
-    const handleSave = () => {
-        onUpdate(todo.id, { title, description });
+    const handleUpdate = () => {
+        onUpdate(todo.id, {
+            title: editTitle,
+            description: editDescription,
+        });
         setIsEditing(false);
     };
 
+    const handleToggleComplete = () => {
+        onUpdate(todo.id, { completed: !todo.completed });
+    };
+
+    const handleDelete = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        onDelete(todo.id);
+        setIsDeleteModalOpen(false);
+    };
+
     return (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 bg-white dark:bg-gray-800 shadow-sm">
-            {isEditing ? (
-                <div className="space-y-3">
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                        rows={3}
-                    />
-                    <div className="flex justify-end space-x-2">
-                        <button
-                            onClick={() => setIsEditing(false)}
-                            className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                            Save
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <div>
-                    <div className="flex items-center justify-between">
-                        <h3 className={`text-lg font-medium ${todo.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
-                            {todo.title}
-                        </h3>
-                        <div className="flex space-x-2">
+        <>
+            <div className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-4 ${todo.completed ? 'opacity-70' : ''}`}>
+                {isEditing ? (
+                    <div className="space-y-3">
+                        <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                        />
+                        <textarea
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                            rows={3}
+                        ></textarea>
+                        <div className="flex justify-end space-x-2">
                             <button
-                                onClick={() => setIsEditing(true)}
-                                className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                onClick={() => setIsEditing(false)}
+                                className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                             >
-                                Edit
+                                Cancel
                             </button>
                             <button
-                                onClick={() => onDelete(todo.id)}
-                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                onClick={handleUpdate}
+                                className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
                             >
-                                Delete
+                                Save
                             </button>
                         </div>
                     </div>
-                    <p className={`mt-1 text-gray-600 dark:text-gray-400 ${todo.completed ? 'line-through' : ''}`}>
-                        {todo.description}
-                    </p>
-                    <div className="mt-3">
-                        <button
-                            onClick={handleToggleComplete}
-                            className={`px-3 py-1 rounded ${todo.completed
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                                }`}
-                        >
-                            {todo.completed ? 'Completed' : 'Mark as Complete'}
-                        </button>
+                ) : (
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3
+                                className={`text-lg font-medium text-gray-900 dark:text-white ${todo.completed ? 'line-through' : ''
+                                    }`}
+                            >
+                                {todo.title}
+                            </h3>
+                            <p className={`text-gray-600 dark:text-gray-300 mt-1 ${todo.completed ? 'line-through' : ''}`}>
+                                {todo.description}
+                            </p>
+                        </div>
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={handleToggleComplete}
+                                className={`p-2.5 rounded-full transition-colors duration-200 ${todo.completed
+                                    ? 'bg-green-500 text-white hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
+                                    } focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2`}
+                                aria-label={`Mark ${todo.title} as ${todo.completed ? 'incomplete' : 'complete'}`}
+                                title={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                            >
+                                <CheckCircleIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="p-2.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                aria-label={`Edit ${todo.title}`}
+                                title="Edit"
+                            >
+                                <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="p-2.5 rounded-full bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                aria-label={`Delete ${todo.title}`}
+                                title="Delete"
+                            >
+                                <TrashIcon className="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+
+            <DeleteConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title={todo.title}
+            />
+        </>
     );
 };
 

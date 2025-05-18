@@ -21,11 +21,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         try {
             const savedTheme = localStorage.getItem('theme') as Theme | null;
             if (savedTheme) return savedTheme;
-
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                return 'dark';
-            }
-            return 'light';
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         } catch (error) {
             console.warn('Failed to access localStorage or matchMedia, defaulting to light theme:', error);
             return 'light';
@@ -36,15 +32,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     useEffect(() => {
         const root = document.documentElement;
-        if (theme === 'dark') {
-            if (!root.classList.contains('dark')) {
-                root.classList.add('dark');
-            }
-        } else {
-            if (root.classList.contains('dark')) {
-                root.classList.remove('dark');
-            }
-        }
+        root.classList.toggle('dark', theme === 'dark');
 
         try {
             localStorage.setItem('theme', theme);
@@ -53,14 +41,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         }
     }, [theme]);
 
-    // Sinkronisasi dengan preferensi sistem
     useEffect(() => {
         if (!window.matchMedia) return;
 
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleChange = () => {
-            const newTheme = mediaQuery.matches ? 'dark' : 'light';
-            setTheme(newTheme);
+            setTheme(mediaQuery.matches ? 'dark' : 'light');
         };
 
         mediaQuery.addEventListener('change', handleChange);

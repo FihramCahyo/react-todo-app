@@ -30,9 +30,6 @@ api.interceptors.response.use(
             // Hapus token dari localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-
-            // Redirect ke halaman login
-            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

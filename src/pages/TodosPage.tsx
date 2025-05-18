@@ -1,72 +1,132 @@
-import { useState, useEffect, useRef } from 'react';
+import { useReducer, useEffect } from 'react';
 import { getTodos, createTodo, updateTodo, deleteTodo } from '../services/todos';
 import TodoItem from '../components/TodoItem';
 import TodoForm from '../components/TodoForm';
-import type { Todo } from '../types';
+import type { Todo, UpdateTodoPayload } from '../types';
+import { toast } from 'react-toastify';
+import TodoSkeleton from '../components/TodoSkeleton';
+
+// Definisikan tipe state
+interface TodosState {
+    todos: Todo[];
+    loading: boolean;
+    error: string | null;
+}
+
+// Definisikan tipe action
+type TodosAction =
+    | { type: 'FETCH_START' }
+    | { type: 'FETCH_SUCCESS'; payload: Todo[] }
+    | { type: 'FETCH_ERROR'; payload: string }
+    | { type: 'ADD_TODO'; payload: Todo }
+    | { type: 'UPDATE_TODO'; payload: { id: number; data: Partial<Todo> } }
+    | { type: 'DELETE_TODO'; payload: number }
+    | { type: 'SET_ERROR'; payload: string };
+
+// Reducer function
+const todosReducer = (state: TodosState, action: TodosAction): TodosState => {
+    switch (action.type) {
+        case 'FETCH_START':
+            return { ...state, loading: true, error: null };
+        case 'FETCH_SUCCESS':
+            return { ...state, loading: false, todos: action.payload };
+        case 'FETCH_ERROR':
+            return { ...state, loading: false, error: action.payload };
+        case 'ADD_TODO':
+            return { ...state, todos: [...state.todos, action.payload] };
+        case 'UPDATE_TODO':
+            return {
+                ...state,
+                todos: state.todos.map((todo) =>
+                    todo.id === action.payload.id ? { ...todo, ...action.payload.data } : todo
+                ),
+            };
+        case 'DELETE_TODO':
+            return {
+                ...state,
+                todos: state.todos.filter((todo) => todo.id !== action.payload),
+            };
+        case 'SET_ERROR':
+            return { ...state, error: action.payload };
+        default:
+            return state;
+    }
+};
 
 const TodosPage = () => {
-    const [todos, setTodos] = useState<Todo[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const hasFetchedRef = useRef(false);
+    // Inisialisasi state dengan useReducer
+    const [state, dispatch] = useReducer(todosReducer, {
+        todos: [],
+        loading: true,
+        error: null,
+    });
 
+    // Destructure state untuk kemudahan penggunaan
+    const { todos, loading, error } = state;
+
+    // Fetch todos saat komponen dimount
     useEffect(() => {
-        if (!hasFetchedRef.current) {
-            fetchTodos();
-            hasFetchedRef.current = true;
-        }
+        const fetchTodos = async () => {
+            dispatch({ type: 'FETCH_START' });
+            try {
+                const data = await getTodos();
+                dispatch({ type: 'FETCH_SUCCESS', payload: data });
+            } catch (err) {
+                dispatch({ type: 'FETCH_ERROR', payload: 'Failed to fetch todos' });
+                console.error(err);
+            }
+        };
+
+        fetchTodos();
     }, []);
 
-    const fetchTodos = async () => {
-        try {
-            setLoading(true);
-            const data = await getTodos();
-            setTodos(data);
-            setError(null);
-        } catch (err) {
-            setError('Failed to fetch todos');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Handler untuk menambah todo
     const handleAddTodo = async (title: string, description: string) => {
         try {
             const newTodo = await createTodo({ title, description });
-            setTodos([...todos, newTodo]);
+            dispatch({ type: 'ADD_TODO', payload: newTodo });
+            toast.success('Todo added successfully!');
         } catch (err) {
-            setError('Failed to add todo');
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to add todo' });
+            toast.error('Failed to add todo');
             console.error(err);
         }
     };
 
+    // Handler untuk memperbarui todo
     const handleUpdateTodo = async (id: number, data: Partial<Todo>) => {
         try {
-            await updateTodo(id, data);
-            setTodos(
-                todos.map((todo) => (todo.id === id ? { ...todo, ...data } : todo))
-            );
+            const transformedData: Partial<UpdateTodoPayload> = {
+                ...data,
+                completed: data.completed !== undefined ? (data.completed ? 1 : 0) : undefined,
+            };
+            await updateTodo(id, transformedData);
+            dispatch({ type: 'UPDATE_TODO', payload: { id, data } });
+            toast.success('Todo updated successfully!');
         } catch (err) {
-            setError('Failed to update todo');
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to update todo' });
+            toast.error('Failed to update todo');
             console.error(err);
         }
     };
 
+    // Handler untuk menghapus todo
     const handleDeleteTodo = async (id: number) => {
         try {
             await deleteTodo(id);
-            setTodos(todos.filter((todo) => todo.id !== id));
+            dispatch({ type: 'DELETE_TODO', payload: id });
+            toast.success('Todo deleted successfully!');
         } catch (err) {
-            setError('Failed to delete todo');
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to delete todo' });
+            toast.error('Failed to delete todo');
             console.error(err);
         }
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className="space-y-4">
+                <TodoSkeleton count={5} />
             </div>
         );
     }
@@ -74,7 +134,10 @@ const TodosPage = () => {
     return (
         <div>
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <div
+                    className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                    role="alert"
+                >
                     <span className="block sm:inline">{error}</span>
                 </div>
             )}
